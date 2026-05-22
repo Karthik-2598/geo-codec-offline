@@ -1,0 +1,7 @@
+# Development files — excluded from npm publish
+scripts/
+test/
+demo/
+.gitignore
+*.log
+node_modules/

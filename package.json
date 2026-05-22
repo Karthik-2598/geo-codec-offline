@@ -1,0 +1,55 @@
+{
+  "name": "goe-codec-offline",
+  "version": "1.0.0",
+  "description": "Zero-dependency offline geocoding library for India — forward geocode, reverse geocode, fuzzy search, and bounding-box queries. No internet required.",
+  "main": "src/index.js",
+  "module": "src/index.mjs",
+  "exports": {
+    ".": {
+      "require": "./src/index.js",
+      "import": "./src/index.mjs",
+      "default": "./src/index.js"
+    }
+  },
+  "bin": {
+    "goe-codec-offline": "./src/cli.js"
+  },
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:data": "node scripts/build-data.js",
+    "test": "node --test test/index.test.js",
+    "demo": "node -e \"const http=require('http'),fs=require('fs'),path=require('path');const s=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html'});res.end(fs.readFileSync(path.join(__dirname,'demo','index.html')));});s.listen(3000,()=>console.log('Demo → http://localhost:3000'));\""
+  },
+  "keywords": [
+    "geocode",
+    "geocoding",
+    "reverse-geocode",
+    "india",
+    "offline",
+    "maps",
+    "geolocation",
+    "spatial",
+    "kd-tree",
+    "trie",
+    "geonames",
+    "latitude",
+    "longitude"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Karthik-2598/geo-codec-offline.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Karthik-2598/geo-codec-offline/issues"
+  },
+  "homepage": "https://github.com/Karthik-2598/geo-codec-offline#readme"
+}

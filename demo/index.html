@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>goe-codec-offline — India Geocoder Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      background: linear-gradient(135deg, #1a1f35 0%, #0f1729 100%);
+      border-bottom: 1px solid #1e2d4a;
+      display: flex;
+      align-items: center;
+      gap: 1rem
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6ee7f7, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    header span {
+      font-size: .8rem;
+      background: #1e3a5f;
+      color: #6ee7f7;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      font-weight: 500
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      flex: 1;
+      height: calc(100vh - 72px)
+    }
+
+    .sidebar {
+      background: #0d1224;
+      border-right: 1px solid #1e2d4a;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0
+    }
+
+    .panel {
+      padding: 1.2rem;
+      border-bottom: 1px solid #1a2540
+    }
+
+    .panel h2 {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #4a6fa5;
+      margin-bottom: .8rem
+    }
+
+    .search-wrap {
+      position: relative
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: .7rem 1rem .7rem 2.5rem;
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: .9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .search-wrap input:focus {
+      border-color: #818cf8
+    }
+
+    .search-wrap .icon {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      opacity: .5
+    }
+
+    .suggestions {
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      margin-top: .4rem;
+      overflow: hidden;
+      display: none
+    }
+
+    .suggestions.show {
+      display: block
+    }
+
+    .suggestion-item {
+      padding: .6rem 1rem;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: background .15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .suggestion-item:hover {
+      background: #1a2540
+    }
+
+    .suggestion-item .city-name {
+      font-weight: 500
+    }
+
+    .suggestion-item .city-state {
+      font-size: .75rem;
+      color: #4a6fa5;
+      background: #0f1729;
+      padding: .15rem .5rem;
+      border-radius: 4px
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: .4rem;
+      margin-bottom: .8rem
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: .5rem;
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      color: #8892a4;
+      font-size: .78rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s
+    }
+
+    .mode-tab.active {
+      background: #1a2a5e;
+      border-color: #818cf8;
+      color: #818cf8
+    }
+
+    .coord-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem
+    }
+
+    .field label {
+      display: block;
+      font-size: .72rem;
+      color: #4a6fa5;
+      margin-bottom: .3rem;
+      font-weight: 500
+    }
+
+    .field input {
+      width: 100%;
+      padding: .6rem .8rem;
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: .85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .field input:focus {
+      border-color: #818cf8
+    }
+
+    .btn {
+      width: 100%;
+      padding: .7rem;
+      background: linear-gradient(135deg, #4f5bd5, #818cf8);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: .6rem;
+      transition: opacity .2s
+    }
+
+    .btn:hover {
+      opacity: .88
+    }
+
+    .btn:active {
+      opacity: .75
+    }
+
+    .result-card {
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 10px;
+      padding: 1rem;
+      animation: fadeIn .3s ease
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .result-card .city-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: .1rem
+    }
+
+    .result-card .city-sub {
+      font-size: .8rem;
+      color: #4a6fa5;
+      margin-bottom: .8rem
+    }
+
+    .result-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem
+    }
+
+    .meta-item {
+      background: #0a0e1a;
+      border-radius: 6px;
+      padding: .5rem .7rem
+    }
+
+    .meta-item .label {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #4a6fa5;
+      margin-bottom: .15rem
+    }
+
+    .meta-item .value {
+      font-size: .85rem;
+      font-weight: 600;
+      color: #6ee7f7
+    }
+
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem
+    }
+
+    .result-row {
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      padding: .7rem 1rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .result-row:hover {
+      border-color: #818cf8;
+      background: #1a2540
+    }
+
+    .result-row .rname {
+      font-weight: 500;
+      font-size: .88rem
+    }
+
+    .result-row .rsub {
+      font-size: .73rem;
+      color: #4a6fa5
+    }
+
+    .result-row .rpop {
+      font-size: .72rem;
+      color: #6ee7f7;
+      background: #0a1929;
+      padding: .15rem .4rem;
+      border-radius: 4px
+    }
+
+    .empty {
+      text-align: center;
+      color: #4a6fa5;
+      font-size: .85rem;
+      padding: 1.5rem 0
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: .68rem;
+      padding: .2rem .5rem;
+      border-radius: 4px;
+      background: #1a3a5e;
+      color: #6ee7f7;
+      font-weight: 500
+    }
+
+    #map {
+      flex: 1;
+      z-index: 0
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: #131929;
+      border: 1px solid #1e2d4a;
+      border-radius: 10px;
+      color: #e2e8f0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .5)
+    }
+
+    .leaflet-popup-tip {
+      background: #131929
+    }
+
+    .leaflet-popup-content {
+      margin: .8rem 1rem;
+      font-family: 'Inter', sans-serif
+    }
+
+    .popup-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #6ee7f7
+    }
+
+    .popup-sub {
+      font-size: .8rem;
+      color: #8892a4;
+      margin-top: .2rem
+    }
+
+    .popup-coords {
+      font-size: .75rem;
+      color: #4a6fa5;
+      margin-top: .5rem;
+      font-family: monospace
+    }
+
+    .tip {
+      font-size: .73rem;
+      color: #4a6fa5;
+      padding: .5rem .8rem;
+      background: #0d1224;
+      border-left: 2px solid #818cf8;
+      border-radius: 0 4px 4px 0;
+      margin-top: .5rem
+    }
+
+    .section-label {
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #4a6fa5;
+      margin: .7rem 0 .3rem
+    }
+
+    /* Custom map markers */
+    .query-marker {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(251, 146, 60, .9);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 4px rgba(251, 146, 60, .3);
+      animation: pulse 1.4s ease-out infinite;
+    }
+
+    .city-marker {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(129, 140, 248, .95);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 4px rgba(129, 140, 248, .3);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, .5)
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(251, 146, 60, 0)
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0)
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>📍</div>
+    <h1>goe-codec-offline</h1>
+    <span>India Geocoder</span>
+    <span style="margin-left:auto;background:#0f2a1a;color:#4ade80">● Fully Offline</span>
+  </header>
+
+  <div class="layout">
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+
+      <!-- Mode selector -->
+      <div class="panel">
+        <h2>Mode</h2>
+        <div class="mode-tabs">
+          <button class="mode-tab active" onclick="setMode('forward')" id="tab-forward">🏙 City Lookup</button>
+          <button class="mode-tab" onclick="setMode('reverse')" id="tab-reverse">📍 Reverse</button>
+          <button class="mode-tab" onclick="setMode('search')" id="tab-search">🗂 Search</button>
+        </div>
+
+        <!-- City Lookup -->
+        <div id="mode-forward">
+          <div class="search-wrap">
+            <span class="icon">🏙</span>
+            <input id="fwd-input" type="text" placeholder="City name or State (e.g. Maharashtra)" autocomplete="off"
+              oninput="onForwardInput()" onkeydown="if(event.key==='Enter')runForward()" />
+          </div>
+          <div class="suggestions" id="fwd-suggestions"></div>
+          <label style="font-size:.72rem;color:#4a6fa5;display:flex;align-items:center;gap:.4rem;margin-top:.6rem">
+            <input type="checkbox" id="fwd-fuzzy" /> Enable fuzzy matching
+          </label>
+          <button class="btn" onclick="runForward()">Find on Map →</button>
+        </div>
+
+        <!-- Reverse geocode -->
+        <div id="mode-reverse" style="display:none">
+          <p class="tip">Click anywhere on the map to pin your coordinates, then click the button to find the nearest
+            city.</p>
+          <div class="coord-row" style="margin-top:.7rem">
+            <div class="field"><label>Latitude</label><input id="rev-lat" type="number" step="0.0001"
+                placeholder="28.6519" oninput="plotQueryPin()" /></div>
+            <div class="field"><label>Longitude</label><input id="rev-lon" type="number" step="0.0001"
+                placeholder="77.2315" oninput="plotQueryPin()" /></div>
+          </div>
+          <div style="display:flex;gap:.4rem;margin-top:.4rem">
+            <div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:#fb923c">
+              <div style="width:10px;height:10px;border-radius:50%;background:#fb923c"></div>Your point
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:#818cf8">
+              <div style="width:10px;height:10px;border-radius:50%;background:#818cf8"></div>Nearest city
+            </div>
+          </div>
+          <button class="btn" onclick="runReverse()" id="rev-btn"
+            style="background:linear-gradient(135deg,#d97706,#f59e0b)">📍 Plot the Coordinates</button>
+        </div>
+
+        <!-- Search -->
+        <div id="mode-search" style="display:none">
+          <div class="search-wrap">
+            <span class="icon">🔎</span>
+            <input id="srch-input" type="text" placeholder="Type a prefix…" oninput="runSearch()" />
+          </div>
+          <label style="font-size:.72rem;color:#4a6fa5;display:flex;align-items:center;gap:.4rem;margin-top:.6rem">
+            <input type="checkbox" id="srch-fuzzy" onchange="runSearch()" /> Fuzzy mode
+          </label>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="panel" style="flex:1">
+        <h2>Results</h2>
+        <div id="results-area">
+          <p class="empty">Results will appear here.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── MAP ── -->
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ── Haversine ──────────────────────────────────────────────────────────────
+    function haversine(lat1, lon1, lat2, lon2, unit = 'km') {
+      const R = unit === 'mi' ? 3958.8 : 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
+    }
+
+    // ── KD-Tree ────────────────────────────────────────────────────────────────
+    function buildKD(pts, d = 0) {
+      if (!pts.length) return null;
+      const ax = d % 2, k = ax === 0 ? 'la' : 'lo';
+      pts = pts.slice().sort((a, b) => a[k] - b[k]);
+      const m = Math.floor(pts.length / 2);
+      return { pt: pts[m], l: buildKD(pts.slice(0, m), d + 1), r: buildKD(pts.slice(m + 1), d + 1) };
+    }
+    function kdNearest(node, lat, lon, d = 0, best = { pt: null, ds: Infinity }) {
+      if (!node) return best;
+      const ds = (lat - node.pt.la) ** 2 + (lon - node.pt.lo) ** 2;
+      if (ds < best.ds) { best.ds = ds; best.pt = node.pt; }
+      const ax = d % 2, diff = ax === 0 ? lat - node.pt.la : lon - node.pt.lo;
+      const [near, far] = diff < 0 ? [node.l, node.r] : [node.r, node.l];
+      kdNearest(near, lat, lon, d + 1, best);
+      if (diff * diff < best.ds) kdNearest(far, lat, lon, d + 1, best);
+      return best;
+    }
+    function kdRange(node, mnLa, mxLa, mnLo, mxLo, d = 0, res = []) {
+      if (!node) return res;
+      const { la, lo } = node.pt;
+      if (la >= mnLa && la <= mxLa && lo >= mnLo && lo <= mxLo) res.push(node.pt);
+      const ax = d % 2;
+      if (ax === 0) { if (mnLa <= node.pt.la) kdRange(node.l, mnLa, mxLa, mnLo, mxLo, d + 1, res); if (mxLa >= node.pt.la) kdRange(node.r, mnLa, mxLa, mnLo, mxLo, d + 1, res); }
+      else { if (mnLo <= node.pt.lo) kdRange(node.l, mnLa, mxLa, mnLo, mxLo, d + 1, res); if (mxLo >= node.pt.lo) kdRange(node.r, mnLa, mxLa, mnLo, mxLo, d + 1, res); }
+      return res;
+    }
+
+    // ── Trie ───────────────────────────────────────────────────────────────────
+    function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 \-]/g, '').trim(); }
+    class Trie {
+      constructor() { this.root = { c: {}, cities: [] }; }
+      insert(name, city) { let n = this.root; for (const ch of norm(name)) { if (!n.c[ch]) n.c[ch] = { c: {}, cities: [] }; n = n.c[ch]; } if (!n.cities.includes(city)) n.cities.push(city); }
+      search(prefix, limit = 10) { let n = this.root; for (const ch of norm(prefix)) { if (!n.c[ch]) return []; n = n.c[ch]; } const r = []; this._col(n, r, limit); return r.sort((a, b) => (b.p || 0) - (a.p || 0)); }
+      _col(n, r, lim) { if (r.length >= lim) return; for (const c of n.cities) { if (!r.includes(c)) r.push(c); if (r.length >= lim) return; } for (const ch of Object.values(n.c)) { this._col(ch, r, lim); if (r.length >= lim) return; } }
+      exact(name) { let n = this.root; for (const ch of norm(name)) { if (!n.c[ch]) return []; n = n.c[ch]; } return n.cities.slice(); }
+    }
+
+    // ── Levenshtein ────────────────────────────────────────────────────────────
+    function lev(a, b, mx = Infinity) {
+      if (a === b) return 0; if (!a.length) return b.length; if (!b.length) return a.length;
+      if (a.length > b.length) [a, b] = [b, a];
+      let prev = Array.from({ length: b.length + 1 }, (_, j) => j), curr = new Array(b.length + 1);
+      for (let i = 1; i <= a.length; i++) {
+        curr[0] = i; let mn = curr[0];
+        for (let j = 1; j <= b.length; j++) { const co = a[i - 1] === b[j - 1] ? 0 : 1; curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + co); if (curr[j] < mn) mn = curr[j]; }
+        if (mn > mx) return mx + 1;[prev, curr] = [curr, prev];
+      }
+      return prev[b.length];
+    }
+    function fuzzySearch(query, cities, { maxDistance = 2, limit = 10 } = {}) {
+      const q = norm(query);
+      return cities.map(c => ({ c, d: lev(q, norm(c.n), maxDistance) })).filter(x => x.d <= maxDistance)
+        .sort((a, b) => a.d !== b.d ? a.d - b.d : (b.c.p || 0) - (a.c.p || 0)).slice(0, limit).map(x => x.c);
+    }
+
+    // ── State names ────────────────────────────────────────────────────────────
+    const STATES = { AN: 'Andaman & Nicobar', AP: 'Andhra Pradesh', AR: 'Arunachal Pradesh', AS: 'Assam', BR: 'Bihar', CG: 'Chhattisgarh', CH: 'Chandigarh', DD: 'Daman & Diu', DL: 'Delhi', DN: 'Dadra & NH', GA: 'Goa', GJ: 'Gujarat', HP: 'Himachal Pradesh', HR: 'Haryana', JH: 'Jharkhand', JK: 'Jammu & Kashmir', KA: 'Karnataka', KL: 'Kerala', LD: 'Lakshadweep', MH: 'Maharashtra', ML: 'Meghalaya', MN: 'Manipur', MP: 'Madhya Pradesh', MZ: 'Mizoram', NL: 'Nagaland', OR: 'Odisha', PB: 'Punjab', PY: 'Puducherry', RJ: 'Rajasthan', SK: 'Sikkim', TG: 'Telangana', TN: 'Tamil Nadu', TR: 'Tripura', UK: 'Uttarakhand', UP: 'Uttar Pradesh', WB: 'West Bengal' };
+
+    // ── Load dataset ───────────────────────────────────────────────────────────
+    let CITIES = [], trie = new Trie(), kdRoot = null;
+    fetch('../src/data/india-cities.json').then(r => r.json()).then(data => {
+      CITIES = data;
+      for (const c of CITIES) trie.insert(c.n, c);
+      kdRoot = buildKD(CITIES.slice());
+      document.getElementById('fwd-input').placeholder = 'Try: Mumbai, Jaipur, Hydera…';
+    }).catch(() => {
+      document.getElementById('results-area').innerHTML = '<p class="empty" style="color:#f87171">⚠ Load <code>demo/index.html</code> via a local server.<br><br><code>npx serve .</code></p>';
+    });
+
+    function expand(c) { return { name: c.n, latitude: c.la, longitude: c.lo, state: STATES[c.s] || c.s, stateCode: c.s, population: c.p, country: 'India' }; }
+
+    // ── Map setup ──────────────────────────────────────────────────────────────
+    const map = L.map('map', { center: [22.5, 82.5], zoom: 5 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
+    let markers = [];
+    let queryPinMarker = null; // orange pulsing dot — user's clicked/typed point
+
+    function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+    function clearQueryPin() { if (queryPinMarker) { map.removeLayer(queryPinMarker); queryPinMarker = null; } }
+
+    // Orange pulsing DivIcon for the user's query coordinate
+    function makeQueryIcon() {
+      return L.divIcon({ className: '', html: '<div class="query-marker"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+    }
+    // Blue DivIcon for the nearest city result
+    function makeCityIcon() {
+      return L.divIcon({ className: '', html: '<div class="city-marker"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+    }
+
+    function addMarker(lat, lon, title, sub, useCity = false) {
+      const icon = useCity ? makeCityIcon() : L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', shadowSize: [41, 41] });
+      const m = L.marker([lat, lon], useCity ? { icon } : {}).addTo(map).bindPopup(`<div class="popup-title">${title}</div><div class="popup-sub">${sub}</div><div class="popup-coords">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>`);
+      markers.push(m); return m;
+    }
+
+    // Called when user types into lat/lon fields manually — just move the orange pin
+    function plotQueryPin() {
+      const lat = parseFloat(document.getElementById('rev-lat').value);
+      const lon = parseFloat(document.getElementById('rev-lon').value);
+      if (isNaN(lat) || isNaN(lon)) return;
+      clearQueryPin();
+      queryPinMarker = L.marker([lat, lon], { icon: makeQueryIcon() }).addTo(map)
+        .bindPopup(`<div class="popup-title" style="color:#fb923c">📍 Your coordinates</div><div class="popup-coords">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>`);
+      map.setView([lat, lon], 8);
+    }
+
+    map.on('click', e => {
+      if (document.getElementById('tab-reverse').classList.contains('active')) {
+        const lat = e.latlng.lat.toFixed(4), lon = e.latlng.lng.toFixed(4);
+        document.getElementById('rev-lat').value = lat;
+        document.getElementById('rev-lon').value = lon;
+        // Only plot the orange query pin on click — do NOT auto-run reverse
+        clearQueryPin();
+        queryPinMarker = L.marker([lat, lon], { icon: makeQueryIcon() }).addTo(map)
+          .bindPopup(`<div class="popup-title" style="color:#fb923c">📍 Your coordinates</div><div class="popup-coords">${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}</div>`);
+        queryPinMarker.openPopup();
+        showEmpty('Coordinates pinned! Click "Plot the Coordinates" to find the nearest city.');
+      }
+    });
+
+    // ── Mode switching ──────────────────────────────────────────────────────────
+    function setMode(m) {
+      ['forward', 'reverse', 'search'].forEach(id => {
+        document.getElementById('mode-' + id).style.display = id === m ? 'block' : 'none';
+        document.getElementById('tab-' + id).classList.toggle('active', id === m);
+      });
+      document.getElementById('results-area').innerHTML = '<p class="empty">Results will appear here.</p>';
+      clearMarkers();
+    }
+
+    // ── State search helper ─────────────────────────────────────────────────────
+    function searchByState(q) {
+      const qn = q.toLowerCase();
+      return CITIES.filter(c => {
+        const sn = (STATES[c.s] || c.s).toLowerCase();
+        return sn.includes(qn) || c.s.toLowerCase() === qn;
+      }).sort((a, b) => (b.p || 0) - (a.p || 0));
+    }
+
+    // ── City Lookup (forward geocode + state search) ────────────────────────────
+    function onForwardInput() {
+      const q = document.getElementById('fwd-input').value.trim();
+      const box = document.getElementById('fwd-suggestions');
+      if (q.length < 2) { box.classList.remove('show'); return; }
+
+      // City suggestions via Trie
+      const cityHits = trie.search(q, 5);
+      // State suggestions — check if input looks like a state name
+      const stateHits = searchByState(q).slice(0, 3);
+
+      const allItems = [
+        ...cityHits.map(c => `<div class="suggestion-item" onclick="selectCity('${c.n.replace(/'/g, "\\'")}')"><span class="city-name">${c.n}</span><span class="city-state">${c.s}</span></div>`),
+        ...stateHits.filter(c => !cityHits.includes(c)).slice(0, 2).map(c => `<div class="suggestion-item" onclick="selectState('${(STATES[c.s] || c.s).replace(/'/g, "\\'")}')"><span class="city-name" style="color:#a78bfa">${STATES[c.s] || c.s}</span><span class="city-state" style="background:#1a1040">State</span></div>`)
+      ];
+
+      if (!allItems.length) { box.classList.remove('show'); return; }
+      // Deduplicate state suggestions
+      const stateNames = new Set();
+      const deduped = [];
+      for (const item of allItems) {
+        const isState = item.includes('State');
+        const stateMatch = item.match(/>(.*?)<\/span><span class="city-state" style/);
+        const key = stateMatch ? stateMatch[1] : '__city__' + deduped.length;
+        if (isState && stateNames.has(key)) continue;
+        if (isState) stateNames.add(key);
+        deduped.push(item);
+      }
+      box.innerHTML = deduped.join('');
+      box.classList.add('show');
+    }
+    function selectCity(name) {
+      document.getElementById('fwd-input').value = name;
+      document.getElementById('fwd-suggestions').classList.remove('show');
+      runForward();
+    }
+    function selectState(stateName) {
+      document.getElementById('fwd-input').value = stateName;
+      document.getElementById('fwd-suggestions').classList.remove('show');
+      runForward();
+    }
+    function runForward() {
+      const q = document.getElementById('fwd-input').value.trim();
+      const fuzzy = document.getElementById('fwd-fuzzy').checked;
+      if (!q) return;
+      document.getElementById('fwd-suggestions').classList.remove('show');
+
+      // First try city match (exact → prefix → fuzzy)
+      let hit = trie.exact(q)[0] || trie.search(q, 1)[0];
+      if (!hit && fuzzy) hit = fuzzySearch(q, CITIES, { maxDistance: 2, limit: 1 })[0];
+
+      if (hit) {
+        // Single city result
+        const c = expand(hit);
+        showCard(c);
+        clearMarkers();
+        const m = addMarker(c.latitude, c.longitude, c.name, c.state);
+        map.setView([c.latitude, c.longitude], 9);
+        setTimeout(() => m.openPopup(), 300);
+        return;
+      }
+
+      // Try state search — show all cities in matching state
+      const stateResults = searchByState(q);
+      if (stateResults.length) {
+        clearMarkers();
+        const expanded = stateResults.slice(0, 30).map(expand);
+        const stateName = STATES[stateResults[0].s] || stateResults[0].s;
+        document.getElementById('results-area').innerHTML = `
+      <div style="font-size:.75rem;color:#a78bfa;margin-bottom:.5rem;font-weight:600">🗺 ${stateName} — ${stateResults.length} cities</div>
+      <div class="results-list">${expanded.map(c => `
+      <div class="result-row" onclick="flyTo(${c.latitude},${c.longitude},'${c.name.replace(/'/g, "\\'")}',' ${c.state}')">
+        <div><div class="rname">${c.name}</div><div class="rsub">${c.state}</div></div>
+        <span class="rpop">${c.population > 0 ? num(c.population) : 'N/A'}</span>
+      </div>`).join('')}</div>`;
+        expanded.forEach(c => addMarker(c.latitude, c.longitude, c.name, c.state));
+        map.fitBounds(expanded.map(c => [c.latitude, c.longitude]), { padding: [40, 40] });
+        return;
+      }
+
+      showEmpty(`No city or state found for "${q}"`);
+    }
+
+    // ── Reverse geocode ─────────────────────────────────────────────────────────
+    function runReverse() {
+      const lat = parseFloat(document.getElementById('rev-lat').value);
+      const lon = parseFloat(document.getElementById('rev-lon').value);
+      if (isNaN(lat) || isNaN(lon)) { showEmpty('Enter valid coordinates.'); return; }
+      if (!kdRoot) { showEmpty('Data not loaded yet.'); return; }
+
+      // Step 1: always re-draw the orange query pin
+      clearQueryPin();
+      clearMarkers();
+      queryPinMarker = L.marker([lat, lon], { icon: makeQueryIcon() }).addTo(map)
+        .bindPopup(`<div class="popup-title" style="color:#fb923c">📍 Your coordinates</div><div class="popup-coords">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>`);
+
+      // Step 2: find nearest city and add a blue city marker
+      const { pt } = kdNearest(kdRoot, lat, lon);
+      const dist = haversine(lat, lon, pt.la, pt.lo);
+      const c = { ...expand(pt), distance: { value: dist, unit: 'km' } };
+
+      const cityM = L.marker([pt.la, pt.lo], { icon: makeCityIcon() }).addTo(map)
+        .bindPopup(`<div class="popup-title" style="color:#818cf8">🏙 ${pt.n}</div><div class="popup-sub">${STATES[pt.s] || pt.s} &bull; ${dist} km away</div><div class="popup-coords">${pt.la.toFixed(4)}, ${pt.lo.toFixed(4)}</div>`);
+      markers.push(cityM);
+
+      // Draw a dashed line connecting the two points
+      const line = L.polyline([[lat, lon], [pt.la, pt.lo]], { color: '#fb923c', dashArray: '6 6', weight: 2, opacity: 0.7 }).addTo(map);
+      markers.push(line);
+
+      showCard(c);
+      map.fitBounds([[lat, lon], [pt.la, pt.lo]], { padding: [70, 70] });
+      setTimeout(() => cityM.openPopup(), 500);
+    }
+
+    // ── Search ──────────────────────────────────────────────────────────────────
+    function runSearch() {
+      const q = document.getElementById('srch-input').value.trim();
+      const fuzzy = document.getElementById('srch-fuzzy').checked;
+      if (!q) { showEmpty('Type a prefix to search.'); return; }
+      let hits = trie.search(q, 12);
+      if (!hits.length && fuzzy) hits = fuzzySearch(q, CITIES, { maxDistance: 2, limit: 10 });
+      if (!hits.length) { showEmpty(`No results for "${q}"`); return; }
+      clearMarkers();
+      const expanded = hits.map(expand);
+      document.getElementById('results-area').innerHTML = `<div class="results-list">${expanded.map(c => `
+    <div class="result-row" onclick="flyTo(${c.latitude},${c.longitude},'${c.name.replace(/'/g, "\\'")}','${c.state}')">
+      <div><div class="rname">${c.name}</div><div class="rsub">${c.state}</div></div>
+      <span class="rpop">${c.population > 0 ? num(c.population) : 'N/A'}</span>
+    </div>`).join('')}</div>`;
+      expanded.forEach(c => addMarker(c.latitude, c.longitude, c.name, c.state));
+      if (expanded.length) map.fitBounds(expanded.map(c => [c.latitude, c.longitude]), { padding: [40, 40] });
+    }
+
+    function flyTo(lat, lon, name, state) {
+      map.setView([lat, lon], 10);
+      markers.find(m => Math.abs(m.getLatLng().lat - lat) < 0.001)?.openPopup();
+    }
+
+    // ── Render helpers ──────────────────────────────────────────────────────────
+    function num(n) { return n.toLocaleString('en-IN'); }
+    function showEmpty(msg) { document.getElementById('results-area').innerHTML = `<p class="empty">${msg}</p>`; }
+    function showCard(c) {
+      document.getElementById('results-area').innerHTML = `
+  <div class="result-card">
+    <div class="city-title">📍 ${c.name}</div>
+    <div class="city-sub">${c.state} &bull; ${c.country}</div>
+    <div class="result-meta">
+      <div class="meta-item"><div class="label">Latitude</div><div class="value">${c.latitude.toFixed(4)}°</div></div>
+      <div class="meta-item"><div class="label">Longitude</div><div class="value">${c.longitude.toFixed(4)}°</div></div>
+      <div class="meta-item"><div class="label">State</div><div class="value" style="color:#a78bfa">${c.stateCode}</div></div>
+      <div class="meta-item"><div class="label">Population</div><div class="value" style="color:#4ade80">${c.population > 0 ? num(c.population) : 'N/A'}</div></div>
+      ${c.distance ? `<div class="meta-item" style="grid-column:span 2"><div class="label">Distance from query</div><div class="value" style="color:#fb923c">${c.distance.value} ${c.distance.unit}</div></div>` : ''}
+    </div>
+  </div>`;
+    }
+  </script>
+</body>
+
+</html>
