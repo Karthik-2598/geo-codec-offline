@@ -1,7 +1,5 @@
 # goe-codec-offline
 
-> ⚠️ **Note:** If `goe-codec-offline` was a typo of `geo-codec-offline`, rename in `package.json` before publishing.
-
 **Zero-dependency, 100% offline geocoding library for India.**  
 Forward geocode · Reverse geocode · Fuzzy search · Bounding-box query — no internet required.
 
@@ -14,7 +12,7 @@ Forward geocode · Reverse geocode · Fuzzy search · Bounding-box query — no 
 ## Installation
 
 ```bash
-npm install goe-codec-offline
+npm install geo-codec-offline
 ```
 
 ---
@@ -23,10 +21,10 @@ npm install goe-codec-offline
 
 ```js
 // CommonJS
-const { geocode, reverseGeocode, search, bbox } = require('goe-codec-offline');
+const { geocode, reverseGeocode, search, bbox } = require('geo-codec-offline');
 
 // ESM
-import { geocode, reverseGeocode, search, bbox } from 'goe-codec-offline';
+import { geocode, reverseGeocode, search, bbox } from 'geo-codec-offline';
 ```
 
 ---
@@ -124,25 +122,25 @@ stats();
 
 ```bash
 # Forward geocode
-npx goe-codec-offline "New Delhi"
+npx geo-codec-offline "New Delhi"
 
 # Reverse geocode
-npx goe-codec-offline --reverse 12.97 77.60
+npx geo-codec-offline --reverse 12.97 77.60
 
 # Prefix search
-npx goe-codec-offline --search "Hyder" --limit 5
+npx geo-codec-offline --search "Hyder" --limit 5
 
 # Fuzzy search
-npx goe-codec-offline "bangalor" --fuzzy
+npx geo-codec-offline "bangalor" --fuzzy
 
 # Bounding box
-npx goe-codec-offline --bbox 15.6 22.1 72.6 80.9
+npx geo-codec-offline --bbox 15.6 22.1 72.6 80.9
 
 # Dataset info
-npx goe-codec-offline --stats
+npx geo-codec-offline --stats
 
 # JSON output (pipe-friendly)
-npx goe-codec-offline "Chennai" --json
+npx geo-codec-offline "Chennai" --json
 ```
 
 ---
