@@ -1,5 +1,5 @@
 {
-  "name": "goe-codec-offline",
+  "name": "geo-codec-offline",
   "version": "1.0.0",
   "description": "Zero-dependency offline geocoding library for India — forward geocode, reverse geocode, fuzzy search, and bounding-box queries. No internet required.",
   "main": "src/index.js",
@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "goe-codec-offline": "./src/cli.js"
+    "geo-codec-offline": "./src/cli.js"
   },
   "files": [
     "src/",
