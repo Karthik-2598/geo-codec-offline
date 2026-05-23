@@ -1,15 +1,12 @@
-# goe-codec-offline
+# geo-codec-offline
 
-**Zero-dependency, 100% offline geocoding library for India.**  
-Forward geocode · Reverse geocode · Fuzzy search · Bounding-box query — no internet required.
+> Offline geocoding for India. No internet. No API key. No limits.
 
-[![npm version](https://img.shields.io/npm/v/goe-codec-offline)](https://www.npmjs.com/package/goe-codec-offline)
-[![license](https://img.shields.io/npm/l/goe-codec-offline)](./LICENSE)
-[![node](https://img.shields.io/node/v/goe-codec-offline)](https://nodejs.org)
+Look up Indian cities by name, find the nearest city to any coordinates, search by state, and more — all from your local machine.
 
 ---
 
-## Installation
+## Install
 
 ```bash
 npm install geo-codec-offline
@@ -17,121 +14,124 @@ npm install geo-codec-offline
 
 ---
 
-## Quick Start
+## Usage
+
+### In your Node.js project
 
 ```js
-// CommonJS
-const { geocode, reverseGeocode, search, bbox } = require('geo-codec-offline');
-
-// ESM
-import { geocode, reverseGeocode, search, bbox } from 'geo-codec-offline';
+const { geocode, reverseGeocode, search, searchByState, bbox, stats } = require('geo-codec-offline');
 ```
 
 ---
 
-## API Reference
-
-### `geocode(name, [opts])` → `object | null`
-
-Convert a city name to coordinates.
+### 1. Forward Geocode — City name → Coordinates
 
 ```js
-geocode('Mumbai');
-// { name: 'Mumbai', latitude: 18.9667, longitude: 72.8333,
-//   state: 'Maharashtra', stateCode: 'MH', population: 12691836,
-//   country: 'India', countryCode: 'IN' }
-
-geocode('Bangalor', { fuzzy: true }); // typo — still finds Bangalore
+const city = geocode('Mumbai');
+console.log(city);
+// {
+//   name: 'Mumbai',
+//   latitude: 18.9667,
+//   longitude: 72.8333,
+//   state: 'Maharashtra',
+//   stateCode: 'MH',
+//   population: 12691836,
+//   country: 'India'
+// }
 ```
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `fuzzy` | boolean | `false` | Enable typo-tolerant (Levenshtein) fallback |
-
----
-
-### `reverseGeocode(lat, lon, [opts])` → `object`
-
-Find the nearest city to a coordinate pair.
+Works with partial names and typos too:
 
 ```js
-reverseGeocode(19.076, 72.877);
-// { name: 'Mumbai', ..., distance: { value: 10.23, unit: 'km' } }
-
-reverseGeocode(28.65, 77.23, { unit: 'mi' });
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `unit` | `'km'` \| `'mi'` | `'km'` | Distance unit |
-
----
-
-### `search(query, [opts])` → `object[]`
-
-Prefix search with optional fuzzy fallback. Returns cities sorted by population.
-
-```js
-search('Hyder');               // → [Hyderabad, ...]
-search('mmbu', { fuzzy: true }); // typo → [Mumbai, ...]
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `limit` | number | `10` | Max results |
-| `fuzzy` | boolean | `false` | Enable fuzzy fallback |
-| `maxDistance` | number | `2` | Max Levenshtein edit distance |
-
----
-
-### `bbox({ minLat, maxLat, minLon, maxLon }, [opts])` → `object[]`
-
-Find all cities within a geographic bounding box.
-
-```js
-// Cities in Maharashtra
-bbox({ minLat: 15.6, maxLat: 22.1, minLon: 72.6, maxLon: 80.9 });
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `limit` | number | `50` | Max results |
-
----
-
-### `listAll()` → `object[]`
-
-Return the complete bundled dataset.
-
-```js
-const all = listAll(); // ~180+ Indian cities
+geocode('Banga');              // → Bangalore (prefix match)
+geocode('Mumbi', { fuzzy: true }); // → Mumbai (typo-tolerant)
 ```
 
 ---
 
-### `stats()` → `object`
+### 2. Reverse Geocode — Coordinates → Nearest City
 
 ```js
-stats();
-// { total: 182, source: 'GeoNames / curated', coverage: 'India (all states and UTs)', version: '1.0.0' }
+const result = reverseGeocode(19.07, 72.87);
+console.log(result.name);            // → 'Mumbai'
+console.log(result.distance.value);  // → 12.3
+console.log(result.distance.unit);   // → 'km'
+```
+
+Get distance in miles:
+
+```js
+reverseGeocode(19.07, 72.87, { unit: 'mi' });
 ```
 
 ---
 
-## CLI Usage
+### 3. Search — Autocomplete / Prefix Search
+
+```js
+const results = search('Hyder', { limit: 5 });
+// → [{ name: 'Hyderabad', ... }, ...]
+```
+
+With fuzzy matching (finds results even with typos):
+
+```js
+search('Chenai', { fuzzy: true });
+// → [{ name: 'Chennai', ... }]
+```
+
+---
+
+### 4. Search by State — All Cities in a State
+
+```js
+searchByState('Kerala');   // full state name
+searchByState('KL');       // 2-letter state code
+searchByState('Pradesh');  // partial match — finds all Pradesh states
+```
+
+Returns cities sorted by population (largest first).
+
+---
+
+### 5. Bounding Box — Cities Within a Region
+
+```js
+const cities = bbox({
+  minLat: 15.6,
+  maxLat: 22.1,
+  minLon: 72.6,
+  maxLon: 80.9
+});
+// → all cities inside Maharashtra's rough boundary
+```
+
+---
+
+### 6. Stats — Dataset Info
+
+```js
+const info = stats();
+// { total: 177, source: 'GeoNames / curated', coverage: 'India', version: '1.0.0' }
+```
+
+---
+
+## CLI — Use Without Writing Code
 
 ```bash
 # Forward geocode
-npx geo-codec-offline "New Delhi"
+npx geo-codec-offline "Delhi"
 
 # Reverse geocode
-npx geo-codec-offline --reverse 12.97 77.60
+npx geo-codec-offline --reverse 28.65 77.23
 
 # Prefix search
-npx geo-codec-offline --search "Hyder" --limit 5
+npx geo-codec-offline --search "Nag" --limit 5
 
-# Fuzzy search
-npx geo-codec-offline "bangalor" --fuzzy
+# All cities in a state
+npx geo-codec-offline --state "Rajasthan"
+npx geo-codec-offline --state RJ
 
 # Bounding box
 npx geo-codec-offline --bbox 15.6 22.1 72.6 80.9
@@ -139,60 +139,37 @@ npx geo-codec-offline --bbox 15.6 22.1 72.6 80.9
 # Dataset info
 npx geo-codec-offline --stats
 
+# Typo-tolerant search
+npx geo-codec-offline "Bangalor" --fuzzy
+
 # JSON output (pipe-friendly)
-npx geo-codec-offline "Chennai" --json
+npx geo-codec-offline "Pune" --json
 ```
 
 ---
 
-## How It Works
+## ES Module Support
 
-| Feature | Data Structure | Complexity |
-|---------|---------------|------------|
-| Forward geocode | **Prefix Trie** | O(k) where k = query length |
-| Reverse geocode | **KD-Tree** nearest-neighbour | O(log n) |
-| Bounding box | **KD-Tree** range query | O(k + log n) |
-| Fuzzy search | **Levenshtein** edit distance | O(n·m) with early exit |
-| Distance calc | **Haversine** formula | O(1) |
-
----
-
-## Expand to Full GeoNames Dataset
-
-The bundled dataset contains ~180 major Indian cities. To use the **complete GeoNames India dataset** (~50,000 populated places):
-
-```bash
-node scripts/build-data.js
+```js
+import { geocode, searchByState } from 'geo-codec-offline';
 ```
 
-This downloads `IN.zip` from [GeoNames.org](https://www.geonames.org) (free, CC-BY 4.0), parses it, and overwrites `src/data/india-cities.json`.
-
 ---
 
-## Demo
+## Why This Package?
 
-Open `demo/index.html` via a local server:
+Most geocoding tools need an internet connection and an API key with usage limits.  
+This package bundles the data locally — **it works offline, always, for free**.
 
-```bash
-npx serve .
-# then visit http://localhost:3000/demo/index.html
-```
-
-Features: live autocomplete, map visualization, click-to-reverse-geocode.
-
----
-
-## Module Format
-
-This package ships as **Dual CJS + ESM**:
-
-- `require('goe-codec-offline')` — Node.js CommonJS
-- `import ... from 'goe-codec-offline'` — ES Modules (Node ≥16, bundlers, browsers)
+- ✅ Zero dependencies
+- ✅ Works in Node.js 16+
+- ✅ Supports both `require()` and `import`
+- ✅ 177 Indian cities across all states and UTs
+- ✅ Fuzzy (typo-tolerant) search built in
+- ✅ KD-Tree for fast nearest-city lookup
 
 ---
 
 ## License
 
-MIT — see [LICENSE](./LICENSE)
-
-Data: [GeoNames](https://www.geonames.org) (CC BY 4.0)
+MIT © Karthik Karra

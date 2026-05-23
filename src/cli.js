@@ -101,7 +101,7 @@ try {
     const s = stats();
     if (asJson) { console.log(JSON.stringify(s, null, 2)); }
     else {
-      console.log('\n  📦 goe-codec-offline — Dataset Info');
+      console.log('\n  📦 geo-codec-offline — Dataset Info');
       console.log('  ─────────────────────────────────');
       for (const [k, v] of Object.entries(s)) {
         console.log(`  ${k.padEnd(12)}: ${v}`);
